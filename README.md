@@ -1,2 +1,5 @@
-# reinvent2017-dev207-code
-Sample code for "Deploying and Managing Ruby Applications on AWS" from AWS re:Invent 2017
+AWS re:Invent DEV207 Sample Code
+
+## License
+
+This library is licensed under the Apache 2.0 License. 
