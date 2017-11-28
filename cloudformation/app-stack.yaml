@@ -1,0 +1,299 @@
+---
+Parameters:
+  VpcId:
+    Description: The ID of the Amazon Virtual Private Cloud (VPC) to use for Amazon EC2 instances.
+    Type: AWS::EC2::VPC::Id
+  PrimarySubnetId:
+    Default: subnet-none
+    Description: The name of the VPC subnet to use for Amazon EC2 instances launched for this project. Also the subnet for test instances.
+    Type: String
+  SecondarySubnetId:
+    Default: subnet-none
+    Description: The name of the VPC subnet to use for Amazon EC2 instances launched for this project.
+    Type: String
+Resources:
+  WebAppIamRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Action: sts:AssumeRole
+          Principal:
+            Service: ec2.amazonaws.com
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforAWSCodeDeploy
+      - arn:aws:iam::aws:policy/service-role/AWSCodeDeployRole
+      - arn:aws:iam::aws:policy/AWSCodeDeployDeployerAccess
+      - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
+      Path: "/"
+  WebAppIamProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: "/"
+      Roles:
+      - Ref: WebAppIamRole
+  WebAppSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable HTTP access via port 80 and SSH access via port 22.
+      SecurityGroupIngress:
+      - CidrIp: 0.0.0.0/0
+        FromPort: '80'
+        ToPort: '80'
+        IpProtocol: tcp
+      - CidrIp: 0.0.0.0/0
+        FromPort: '22'
+        ToPort: '22'
+        IpProtocol: tcp
+      VpcId:
+        Ref: VpcId
+  WebAppInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      IamInstanceProfile:
+        Ref: WebAppIamProfile
+      ImageId: ami-7172b611
+      InstanceType: t2.micro
+      NetworkInterfaces:
+      - AssociatePublicIpAddress: true
+        DeviceIndex: 0
+        GroupSet:
+        - Ref: WebAppSecurityGroup
+        SubnetId:
+          Ref: PrimarySubnetId
+      Tags:
+      - Key: Environment
+        Value: reinvent-record-api-test
+      UserData: |
+        IyEvYmluL2Jhc2ggLWV4CgojIEluc3RhbGwgdGhlIEFXUyBDb2RlRGVwbG95
+        IEFnZW50LgpjZCAvaG9tZS9lYzItdXNlci8Kd2dldCBodHRwczovL2F3cy1j
+        b2RlZGVwbG95LXVzLXdlc3QtMi5zMy5hbWF6b25hd3MuY29tL2xhdGVzdC9j
+        b2RlZGVwbG95LWFnZW50Lm5vYXJjaC5ycG0KeXVtIC15IGluc3RhbGwgY29k
+        ZWRlcGxveS1hZ2VudC5ub2FyY2gucnBtCg==
+  ELBLoadBalancer:
+    Type: AWS::ElasticLoadBalancing::LoadBalancer
+    Properties:
+      Listeners:
+      - LoadBalancerPort: 80
+        InstancePort: 80
+        Protocol: HTTP
+      Subnets:
+      - Ref: PrimarySubnetId
+      - Ref: SecondarySubnetId
+      Tags:
+      - Key: Environment
+        Value: reinvent-record-api
+  AutoScalingLaunchConfiguration:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties:
+      IamInstanceProfile:
+        Ref: WebAppIamProfile
+      ImageId: ami-7172b611
+      InstanceType: m3.medium
+      SecurityGroups:
+      - Ref: WebAppSecurityGroup
+      UserData: |
+        IyEvYmluL2Jhc2ggLWV4CgojIEluc3RhbGwgdGhlIEFXUyBDb2RlRGVwbG95
+        IEFnZW50LgpjZCAvaG9tZS9lYzItdXNlci8Kd2dldCBodHRwczovL2F3cy1j
+        b2RlZGVwbG95LXVzLXdlc3QtMi5zMy5hbWF6b25hd3MuY29tL2xhdGVzdC9j
+        b2RlZGVwbG95LWFnZW50Lm5vYXJjaC5ycG0KeXVtIC15IGluc3RhbGwgY29k
+        ZWRlcGxveS1hZ2VudC5ub2FyY2gucnBtCg==
+  AutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      LaunchConfigurationName:
+        Ref: AutoScalingLaunchConfiguration
+      LoadBalancerNames:
+      - Ref: ELBLoadBalancer
+      MaxSize: 4
+      MinSize: 2
+      Tags:
+      - Key: Environment
+        Value: reinvent-record-api-prod
+        PropagateAtLaunch: true
+      VPCZoneIdentifier:
+      - Ref: PrimarySubnetId
+      - Ref: SecondarySubnetId
+  CIArtifactBucket:
+    Type: AWS::S3::Bucket
+  CICodePipelineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Action: sts:AssumeRole
+          Principal:
+            Service: codepipeline.amazonaws.com
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/AmazonS3FullAccess
+      - arn:aws:iam::aws:policy/AmazonEC2FullAccess
+      - arn:aws:iam::aws:policy/AutoScalingFullAccess
+      - arn:aws:iam::aws:policy/AWSCodePipelineFullAccess
+      - arn:aws:iam::aws:policy/AWSCodeBuildAdminAccess
+      - arn:aws:iam::aws:policy/AWSCodeCommitFullAccess
+      - arn:aws:iam::aws:policy/AWSCodeDeployFullAccess
+  CIPipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      ArtifactStore:
+        Type: S3
+        Location:
+          Ref: CIArtifactBucket
+      Name: ReinventRecordPipeline
+      RoleArn:
+        Fn::GetAtt:
+        - CICodePipelineRole
+        - Arn
+      Stages:
+      - Name: Source
+        Actions:
+        - Name: SourceAction
+          ActionTypeId:
+            Category: Source
+            Owner: AWS
+            Provider: CodeCommit
+            Version: '1'
+          OutputArtifacts:
+          - Name: AppSource
+          Configuration:
+            BranchName: master
+            RepositoryName: ReinventRecordRepo
+      - Name: Build
+        Actions:
+        - Name: BuildAction
+          ActionTypeId:
+            Category: Build
+            Owner: AWS
+            Provider: CodeBuild
+            Version: '1'
+          InputArtifacts:
+          - Name: AppSource
+          OutputArtifacts:
+          - Name: AppBuild
+          Configuration:
+            ProjectName: ReinventRecordBuild
+      - Name: Test
+        Actions:
+        - Name: TestDeployAction
+          Configuration:
+            ApplicationName:
+              Ref: CICodeDeployTestApp
+            DeploymentGroupName:
+              Ref: CICodeDeployTestGroup
+          ActionTypeId:
+            Category: Deploy
+            Owner: AWS
+            Provider: CodeDeploy
+            Version: '1'
+          InputArtifacts:
+          - Name: AppSource
+      - Name: Prod
+        Actions:
+        - Name: ProdDeployAction
+          Configuration:
+            ApplicationName:
+              Ref: CICodeDeployProdApp
+            DeploymentGroupName:
+              Ref: CICodeDeployProdGroup
+          ActionTypeId:
+            Category: Deploy
+            Owner: AWS
+            Provider: CodeDeploy
+            Version: '1'
+          InputArtifacts:
+          - Name: AppSource
+  CICodeBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Action: sts:AssumeRole
+          Principal:
+            Service: codebuild.amazonaws.com
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/AmazonS3FullAccess
+      - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
+      - arn:aws:iam::aws:policy/AWSCodeBuildAdminAccess
+      - arn:aws:iam::aws:policy/AmazonAPIGatewayAdministrator
+  CICodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Artifacts:
+        Type: codepipeline
+      ServiceRole:
+        Ref: CICodeBuildRole
+      Environment:
+        ComputeType: small
+        Image: aws/codebuild/ruby:2.3.1
+        Type: container
+      Source:
+        Type: codepipeline
+      Name: ReinventRecordBuild
+  CICodeDeployTestRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Action: sts:AssumeRole
+          Principal:
+            Service: codedeploy.amazonaws.com
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/AmazonS3FullAccess
+      - arn:aws:iam::aws:policy/AWSCodeDeployFullAccess
+      - arn:aws:iam::aws:policy/AmazonEC2FullAccess
+  CICodeDeployTestApp:
+    Type: AWS::CodeDeploy::Application
+  CICodeDeployTestGroup:
+    Type: AWS::CodeDeploy::DeploymentGroup
+    Properties:
+      ApplicationName:
+        Ref: CICodeDeployTestApp
+      DeploymentConfigName: CodeDeployDefault.OneAtATime
+      Ec2TagFilters:
+      - Key: Environment
+        Value: reinvent-record-api-test
+        Type: KEY_AND_VALUE
+      ServiceRoleArn:
+        Fn::GetAtt:
+        - CICodeDeployTestRole
+        - Arn
+  CICodeDeployProdRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Action: sts:AssumeRole
+          Principal:
+            Service: codedeploy.amazonaws.com
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/AmazonS3FullAccess
+      - arn:aws:iam::aws:policy/AWSCodeDeployFullAccess
+      - arn:aws:iam::aws:policy/AmazonEC2FullAccess
+  CICodeDeployProdApp:
+    Type: AWS::CodeDeploy::Application
+  CICodeDeployProdGroup:
+    Type: AWS::CodeDeploy::DeploymentGroup
+    Properties:
+      ApplicationName:
+        Ref: CICodeDeployProdApp
+      AutoScalingGroups:
+      - Ref: AutoScalingGroup
+      DeploymentConfigName: CodeDeployDefault.OneAtATime
+      ServiceRoleArn:
+        Fn::GetAtt:
+        - CICodeDeployProdRole
+        - Arn
+  CICodeCommitRepo:
+    Type: AWS::CodeCommit::Repository
+    Properties:
+      RepositoryName: ReinventRecordRepo
