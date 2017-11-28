@@ -1,0 +1,9 @@
+#!/bin/bash
+gem install aws-sdk-apigateway
+cd scripts
+ruby sdk_integration_test_setup.rb
+cd test-sdk/recordapi-sdk
+gem build recordapi-sdk.gemspec
+gem install recordapi-sdk-*.gem
+cd ../..
+ruby sdk_integration_test.rb

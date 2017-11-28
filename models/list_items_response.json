@@ -1,0 +1,12 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "ListItemsResponse",
+  "type": "object",
+  "properties": {
+    "itemIds": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "nextToken": { "type": "string" }
+  }
+}

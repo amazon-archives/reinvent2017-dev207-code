@@ -1,0 +1,16 @@
+version: 0.2
+
+env:
+  variables:
+    RAILS_ENV: "test"
+
+phases:
+  install:
+    commands:
+      - bundle install
+    pre_build:
+      commands:
+        - bin/rake record:migrate
+    build:
+      commands:
+        - rake test

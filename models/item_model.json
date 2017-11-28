@@ -1,0 +1,9 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "ItemModel",
+  "type": "object",
+  "properties": {
+    "uuid": { "type": "string" },
+    "body": { "type": "string" }
+  }
+}
