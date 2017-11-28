@@ -1,0 +1,495 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "version": "2017-11-03T23:00:14Z",
+    "title": "reinvent-record-api"
+  },
+  "host": "restapiid.execute-api.us-west-2.amazonaws.com",
+  "basePath": "/prod",
+  "schemes": [
+    "https"
+  ],
+  "paths": {
+    "/items": {
+      "get": {
+        "description": "Lists item identifiers in pages of up to 20.",
+        "operationId": "ListItems",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "Limit",
+            "in": "query",
+            "description": "Optional parameter to specify a response page size limit. Maximum value of 20.",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "NextToken",
+            "in": "query",
+            "description": "Optional parameter to specify the start token of the next response page. If a ListItems call is truncated, you should use the NextToken value from that response.",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200 response",
+            "schema": {
+              "$ref": "#/definitions/ItemIdCollection"
+            }
+          },
+          "404": {
+            "description": "404 response",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        },
+        "x-amazon-apigateway-integration": {
+          "responses": {
+            "default": {
+              "statusCode": "200"
+            }
+          },
+          "requestParameters": {
+            "integration.request.querystring.NextToken": "method.request.querystring.NextToken",
+            "integration.request.querystring.Limit": "method.request.querystring.Limit"
+          },
+          "uri": "http://reinventapilb-74964102.us-west-2.elb.amazonaws.com/items",
+          "passthroughBehavior": "when_no_match",
+          "httpMethod": "GET",
+          "type": "http"
+        }
+      },
+      "post": {
+        "description": "Creates a new item.",
+        "operationId": "CreateItem",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "ItemInput",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ItemInput"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200 response",
+            "schema": {
+              "$ref": "#/definitions/ItemStructure"
+            }
+          }
+        },
+        "x-amazon-apigateway-integration": {
+          "responses": {
+            "default": {
+              "statusCode": "200"
+            }
+          },
+          "uri": "http://reinventapilb-74964102.us-west-2.elb.amazonaws.com/items",
+          "passthroughBehavior": "when_no_match",
+          "httpMethod": "POST",
+          "type": "http"
+        }
+      }
+    },
+    "/items/{uuid}": {
+      "get": {
+        "description": "Gets an existing item from the data store.",
+        "operationId": "GetItem",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "uuid",
+            "in": "path",
+            "description": "The unique identifier of the item to retreive.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200 response",
+            "schema": {
+              "$ref": "#/definitions/ItemStructure"
+            }
+          },
+          "404": {
+            "description": "404 response",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        },
+        "x-amazon-apigateway-integration": {
+          "responses": {
+            "4\\d{2}": {
+              "statusCode": "404"
+            },
+            "2\\d{2}": {
+              "statusCode": "200"
+            }
+          },
+          "requestParameters": {
+            "integration.request.path.uuid": "method.request.path.uuid"
+          },
+          "uri": "http://ReinventApiLB-74964102.us-west-2.elb.amazonaws.com/items/{uuid}",
+          "passthroughBehavior": "when_no_match",
+          "httpMethod": "GET",
+          "type": "http"
+        }
+      },
+      "delete": {
+        "description": "Deletes an existing item.",
+        "operationId": "DeleteItem",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "uuid",
+            "in": "path",
+            "description": "The unique identifier of the item to be deleted.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200 response",
+            "schema": {
+              "$ref": "#/definitions/Empty"
+            }
+          }
+        },
+        "x-amazon-apigateway-integration": {
+          "responses": {
+            "default": {
+              "statusCode": "200"
+            }
+          },
+          "requestParameters": {
+            "integration.request.path.uuid": "method.request.path.uuid"
+          },
+          "uri": "http://ReinventApiLB-74964102.us-west-2.elb.amazonaws.com/items/{uuid}",
+          "passthroughBehavior": "when_no_match",
+          "httpMethod": "DELETE",
+          "type": "http"
+        }
+      },
+      "patch": {
+        "description": "Updates an existing item, and returns the new item.",
+        "operationId": "UpdateItem",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "uuid",
+            "in": "path",
+            "description": "The unique identifier of the item to be updated.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "body",
+            "name": "ItemInput",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ItemInput"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200 response",
+            "schema": {
+              "$ref": "#/definitions/ItemStructure"
+            }
+          }
+        },
+        "x-amazon-apigateway-integration": {
+          "responses": {
+            "default": {
+              "statusCode": "200"
+            }
+          },
+          "requestParameters": {
+            "integration.request.path.uuid": "method.request.path.uuid"
+          },
+          "uri": "http://ReinventApiLB-74964102.us-west-2.elb.amazonaws.com/items/{uuid}",
+          "passthroughBehavior": "when_no_match",
+          "httpMethod": "PATCH",
+          "type": "http"
+        }
+      }
+    }
+  },
+  "definitions": {
+    "Empty": {
+      "type": "object",
+      "title": "Empty Schema"
+    },
+    "ItemIdCollection": {
+      "type": "object",
+      "properties": {
+        "item_ids": {
+          "type": "array",
+          "description": "An array of item unique identifiers.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "next_token": {
+          "type": "string",
+          "description": "When present, indicates the response is truncated. Can be used as a next token input to a new ListItems request."
+        }
+      },
+      "title": "ItemIdCollection"
+    },
+    "Error": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "retriable": {
+          "type": "boolean"
+        }
+      },
+      "title": "Error Schema"
+    },
+    "ItemStructure": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "type": "object",
+          "properties": {
+            "uuid": {
+              "type": "string",
+              "description": "The item's unique identifier."
+            },
+            "body": {
+              "type": "string",
+              "description": "The body text of an item."
+            },
+            "created_date": {
+              "type": "string",
+              "description": "A timestamp string indicating the time of initial item creation."
+            },
+            "updated_date": {
+              "type": "string",
+              "description": "A timestamp string indicating the most recent time the item was updated."
+            }
+          }
+        }
+      },
+      "title": "ItemStructure"
+    },
+    "ItemInput": {
+      "type": "object",
+      "required": [
+        "body"
+      ],
+      "properties": {
+        "body": {
+          "type": "string",
+          "description": "The new body text for an item."
+        }
+      },
+      "title": "ItemInput"
+    }
+  },
+  "x-amazon-apigateway-documentation": {
+    "version": "V1",
+    "createdDate": "2017-11-03T23:03:20Z",
+    "documentationParts": [
+      {
+        "location": {
+          "type": "METHOD",
+          "path": "/items/{uuid}",
+          "method": "DELETE"
+        },
+        "properties": {
+          "description": "Deletes an existing item."
+        }
+      },
+      {
+        "location": {
+          "type": "METHOD",
+          "path": "/items/{uuid}",
+          "method": "GET"
+        },
+        "properties": {
+          "description": "Gets an existing item from the data store."
+        }
+      },
+      {
+        "location": {
+          "type": "METHOD",
+          "path": "/items/{uuid}",
+          "method": "PATCH"
+        },
+        "properties": {
+          "description": "Updates an existing item, and returns the new item."
+        }
+      },
+      {
+        "location": {
+          "type": "METHOD",
+          "path": "/items",
+          "method": "GET"
+        },
+        "properties": {
+          "description": "Lists item identifiers in pages of up to 20."
+        }
+      },
+      {
+        "location": {
+          "type": "METHOD",
+          "path": "/items",
+          "method": "POST"
+        },
+        "properties": {
+          "description": "Creates a new item."
+        }
+      },
+      {
+        "location": {
+          "type": "MODEL",
+          "name": "ItemIdCollection.item_ids"
+        },
+        "properties": {
+          "description": "An array of item unique identifiers."
+        }
+      },
+      {
+        "location": {
+          "type": "MODEL",
+          "name": "ItemIdCollection.next_token"
+        },
+        "properties": {
+          "description": "When present, indicates the response is truncated. Can be used as a next token input to a new ListItems request."
+        }
+      },
+      {
+        "location": {
+          "type": "MODEL",
+          "name": "ItemInput.body"
+        },
+        "properties": {
+          "description": "The new body text for an item."
+        }
+      },
+      {
+        "location": {
+          "type": "MODEL",
+          "name": "ItemStructure.item.body"
+        },
+        "properties": {
+          "description": "The body text of an item."
+        }
+      },
+      {
+        "location": {
+          "type": "MODEL",
+          "name": "ItemStructure.item.created_date"
+        },
+        "properties": {
+          "description": "A timestamp string indicating the time of initial item creation."
+        }
+      },
+      {
+        "location": {
+          "type": "MODEL",
+          "name": "ItemStructure.item.updated_date"
+        },
+        "properties": {
+          "description": "A timestamp string indicating the most recent time the item was updated."
+        }
+      },
+      {
+        "location": {
+          "type": "MODEL",
+          "name": "ItemStructure.item.uuid"
+        },
+        "properties": {
+          "description": "The item's unique identifier."
+        }
+      },
+      {
+        "location": {
+          "type": "PATH_PARAMETER",
+          "path": "/items/{uuid}",
+          "method": "DELETE",
+          "name": "uuid"
+        },
+        "properties": {
+          "description": "The unique identifier of the item to be deleted."
+        }
+      },
+      {
+        "location": {
+          "type": "PATH_PARAMETER",
+          "path": "/items/{uuid}",
+          "method": "GET",
+          "name": "uuid"
+        },
+        "properties": {
+          "description": "The unique identifier of the item to retreive."
+        }
+      },
+      {
+        "location": {
+          "type": "PATH_PARAMETER",
+          "path": "/items/{uuid}",
+          "method": "PATCH",
+          "name": "uuid"
+        },
+        "properties": {
+          "description": "The unique identifier of the item to be updated."
+        }
+      },
+      {
+        "location": {
+          "type": "QUERY_PARAMETER",
+          "path": "/items",
+          "method": "GET",
+          "name": "Limit"
+        },
+        "properties": {
+          "description": "Optional parameter to specify a response page size limit. Maximum value of 20."
+        }
+      },
+      {
+        "location": {
+          "type": "QUERY_PARAMETER",
+          "path": "/items",
+          "method": "GET",
+          "name": "NextToken"
+        },
+        "properties": {
+          "description": "Optional parameter to specify the start token of the next response page. If a ListItems call is truncated, you should use the NextToken value from that response."
+        }
+      }
+    ]
+  }
+}
