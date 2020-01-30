@@ -6,7 +6,7 @@ git_source(:github) do |repo_name|
 end
 
 gem 'rails', '~> 5.1.4'
-gem 'puma', '~> 3.7'
+gem 'puma', '~> 3.12'
 gem 'aws-record', '~> 2'
 gem 'aws-sdk-rails', '~> 2'
 gem 'passenger'
